@@ -26,5 +26,6 @@ function checkAuth(): boolean {
 function AuthenticatedLayout() {
   // This layout just passes through to children
   // The actual app layout (sidebar, header) is in _app.tsx
+  console.log('Rendering AuthenticatedLayout')
   return <Outlet />
 }

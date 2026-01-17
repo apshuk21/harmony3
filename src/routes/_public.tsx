@@ -7,6 +7,7 @@ export const Route = createFileRoute('/_public')({
 // Simple layout for public pages (login, logout)
 // No sidebar, just centered content
 function PublicLayout() {
+  console.log('Rendering PublicLayout')
   return (
     <div className="public-layout">
       <div className="public-container">

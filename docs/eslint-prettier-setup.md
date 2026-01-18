@@ -21,14 +21,14 @@ npm install -D eslint @eslint/js typescript-eslint globals
 npm install -D eslint-plugin-react-hooks eslint-plugin-react-refresh
 ```
 
-| Package | Purpose |
-|---------|---------|
-| `eslint` | Core linting engine |
-| `@eslint/js` | ESLint's recommended JavaScript rules |
-| `typescript-eslint` | TypeScript parsing and rules |
-| `globals` | Global variable definitions (browser, node) |
-| `eslint-plugin-react-hooks` | Enforces React hooks rules |
-| `eslint-plugin-react-refresh` | Validates React Fast Refresh boundaries |
+| Package                       | Purpose                                     |
+| ----------------------------- | ------------------------------------------- |
+| `eslint`                      | Core linting engine                         |
+| `@eslint/js`                  | ESLint's recommended JavaScript rules       |
+| `typescript-eslint`           | TypeScript parsing and rules                |
+| `globals`                     | Global variable definitions (browser, node) |
+| `eslint-plugin-react-hooks`   | Enforces React hooks rules                  |
+| `eslint-plugin-react-refresh` | Validates React Fast Refresh boundaries     |
 
 ---
 
@@ -72,9 +72,9 @@ export default defineConfig([
 npm install -D prettier eslint-config-prettier
 ```
 
-| Package | Purpose |
-|---------|---------|
-| `prettier` | Code formatter |
+| Package                  | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `prettier`               | Code formatter                                    |
 | `eslint-config-prettier` | Disables ESLint rules that conflict with Prettier |
 
 ---
@@ -98,16 +98,16 @@ Create `.prettierrc` in your project root:
 
 ### Common Options Explained
 
-| Option | Value | Effect |
-|--------|-------|--------|
-| `semi` | `false` | No semicolons at end of statements |
-| `singleQuote` | `true` | Use `'single'` instead of `"double"` quotes |
-| `tabWidth` | `2` | 2 spaces per indentation level |
-| `trailingComma` | `"es5"` | Trailing commas where valid in ES5 |
-| `printWidth` | `100` | Line wrap at 100 characters |
-| `bracketSpacing` | `true` | Spaces in object literals `{ foo: bar }` |
-| `jsxSingleQuote` | `false` | Use double quotes in JSX attributes |
-| `arrowParens` | `"always"` | Always include parens: `(x) => x` |
+| Option           | Value      | Effect                                      |
+| ---------------- | ---------- | ------------------------------------------- |
+| `semi`           | `false`    | No semicolons at end of statements          |
+| `singleQuote`    | `true`     | Use `'single'` instead of `"double"` quotes |
+| `tabWidth`       | `2`        | 2 spaces per indentation level              |
+| `trailingComma`  | `"es5"`    | Trailing commas where valid in ES5          |
+| `printWidth`     | `100`      | Line wrap at 100 characters                 |
+| `bracketSpacing` | `true`     | Spaces in object literals `{ foo: bar }`    |
+| `jsxSingleQuote` | `false`    | Use double quotes in JSX attributes         |
+| `arrowParens`    | `"always"` | Always include parens: `(x) => x`           |
 
 ---
 
@@ -180,11 +180,11 @@ Update `package.json`:
 }
 ```
 
-| Script | Purpose |
-|--------|---------|
-| `lint` | Check for ESLint errors |
-| `lint:fix` | Auto-fix ESLint errors where possible |
-| `format` | Format all files with Prettier |
+| Script         | Purpose                                      |
+| -------------- | -------------------------------------------- |
+| `lint`         | Check for ESLint errors                      |
+| `lint:fix`     | Auto-fix ESLint errors where possible        |
+| `format`       | Format all files with Prettier               |
 | `format:check` | Check if files are formatted (useful for CI) |
 
 ---
@@ -210,6 +210,7 @@ Update `package.json`:
 ```
 
 This enables:
+
 - Auto-format with Prettier on save
 - Auto-fix ESLint issues on save
 
@@ -246,9 +247,9 @@ Make sure your files have `.ts` or `.tsx` extensions and `typescript-eslint` is 
 
 ## Summary
 
-| File | Purpose |
-|------|---------|
-| `eslint.config.js` | ESLint rules and plugins |
-| `.prettierrc` | Prettier formatting options |
-| `.prettierignore` | Files Prettier should skip |
+| File                    | Purpose                     |
+| ----------------------- | --------------------------- |
+| `eslint.config.js`      | ESLint rules and plugins    |
+| `.prettierrc`           | Prettier formatting options |
+| `.prettierignore`       | Files Prettier should skip  |
 | `.vscode/settings.json` | Editor auto-format settings |

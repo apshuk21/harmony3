@@ -7,6 +7,8 @@
  * Reference: docs/harmony/07-test-setup-guide.md
  */
 import { tradeHandlers } from './handlers/trades'
+import { fxCashHandlers } from './handlers/fx-cash'
+import { fxOptionsHandlers } from './handlers/fx-options'
 
 // Import other handlers as they are created:
 // import { userHandlers } from './handlers/users'
@@ -14,6 +16,8 @@ import { tradeHandlers } from './handlers/trades'
 
 export const handlers = [
   ...tradeHandlers,
+  ...fxCashHandlers,
+  ...fxOptionsHandlers,
   // ...userHandlers,
   // ...authHandlers,
 ]

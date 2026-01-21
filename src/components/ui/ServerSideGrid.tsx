@@ -14,6 +14,7 @@
  *
  * Usage:
  * ```tsx
+ * // Basic usage
  * <ServerSideGrid<MyDataType>
  *   columnDefs={columns}
  *   fetchUrl="/api/my-endpoint"
@@ -21,11 +22,25 @@
  *   onRowSelected={(rows) => console.log(rows)}
  *   getRowIdFromData={(data) => data.id}
  * />
+ *
+ * // With ref for imperative access
+ * const gridRef = useRef<ServerSideGridHandle<MyDataType>>(null)
+ *
+ * // Access grid operations
+ * gridRef.current?.refreshData()
+ * gridRef.current?.getSelectedRows()
+ * gridRef.current?.exportToCsv('export.csv')
+ *
+ * <ServerSideGrid<MyDataType>
+ *   ref={gridRef}
+ *   columnDefs={columns}
+ *   fetchUrl="/api/my-endpoint"
+ * />
  * ```
  *
  * This component extends AgGridReactProps, so you can pass any AG Grid prop directly.
  */
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import type { AgGridReactProps } from 'ag-grid-react'
 import type {
@@ -36,6 +51,9 @@ import type {
   SelectionChangedEvent,
   RowSelectionOptions,
   Module,
+  GridApi,
+  ColumnApi,
+  IServerSideGetRowsParams,
 } from 'ag-grid-community'
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community'
 import { AllEnterpriseModule } from 'ag-grid-enterprise'
@@ -101,25 +119,143 @@ export type ServerSideGridProps<T> = ServerSideGridCustomProps<T> &
   >
 
 /**
- * Reusable AG Grid component with Server-Side Row Model
+ * Imperative handle exposed to parent components via ref
+ * Provides controlled access to grid operations
  */
-export function ServerSideGrid<T extends object>({
-  // Custom props
-  fetchUrl,
-  rowSelectionMode,
-  onRowSelected,
-  className = '',
-  height = '500px',
-  getRowIdFromData,
-  // AG Grid props with defaults
-  cacheBlockSize = 100,
-  rowHeight = 40,
-  headerHeight = 48,
-  defaultColDef: customDefaultColDef,
-  // Rest of AG Grid props
-  ...agGridProps
-}: ServerSideGridProps<T>) {
+export interface ServerSideGridHandle<T> {
+  /** Get the AG Grid API instance */
+  getApi: () => GridApi<T> | undefined
+  /** Refresh server-side data (purge cache and reload) */
+  refreshData: (purge?: boolean) => void
+  /** Get currently selected rows */
+  getSelectedRows: () => T[]
+  /** Clear all row selections */
+  clearSelection: () => void
+  /** Select rows by their IDs */
+  selectRowsById: (ids: string[]) => void
+  /** Export data to CSV */
+  exportToCsv: (fileName?: string) => void
+  /** Export data to Excel */
+  exportToExcel: (fileName?: string) => void
+  /** Set filter model programmatically */
+  setFilterModel: (filterModel: Record<string, unknown>) => void
+  /** Get current filter model */
+  getFilterModel: () => Record<string, unknown> | null
+  /** Set sort model programmatically */
+  setSortModel: (sortModel: Array<{ colId: string; sort: 'asc' | 'desc' }>) => void
+  /** Get current sort model */
+  getSortModel: () => Array<{ colId: string; sort: 'asc' | 'desc' | null }>
+  /** Show loading overlay */
+  showLoadingOverlay: () => void
+  /** Hide overlay */
+  hideOverlay: () => void
+  /** Get displayed row count */
+  getDisplayedRowCount: () => number
+}
+
+/**
+ * Inner component implementation (not exported)
+ */
+function ServerSideGridInner<T extends object>(
+  {
+    // Custom props
+    fetchUrl,
+    rowSelectionMode,
+    onRowSelected,
+    className = '',
+    height = '500px',
+    getRowIdFromData,
+    // AG Grid props with defaults
+    cacheBlockSize = 100,
+    rowHeight = 40,
+    headerHeight = 48,
+    defaultColDef: customDefaultColDef,
+    // Rest of AG Grid props
+    ...agGridProps
+  }: ServerSideGridProps<T>,
+  ref: React.ForwardedRef<ServerSideGridHandle<T>>
+) {
   const gridRef = useRef<AgGridReact<T>>(null)
+
+  // Expose imperative methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    getApi: () => gridRef.current?.api,
+
+    refreshData: (purge = true) => {
+      gridRef.current?.api?.refreshServerSide({ purge })
+    },
+
+    getSelectedRows: () => {
+      return gridRef.current?.api?.getSelectedRows() ?? []
+    },
+
+    clearSelection: () => {
+      gridRef.current?.api?.deselectAll()
+    },
+
+    selectRowsById: (ids: string[]) => {
+      const api = gridRef.current?.api
+      if (!api) return
+
+      api.deselectAll()
+      api.forEachNode((node) => {
+        if (node.data) {
+          const rowId = getRowIdFromData
+            ? getRowIdFromData(node.data)
+            : (node.data as T & { id?: string }).id
+
+          if (rowId && ids.includes(rowId)) {
+            node.setSelected(true)
+          }
+        }
+      })
+    },
+
+    exportToCsv: (fileName = 'export.csv') => {
+      gridRef.current?.api?.exportDataAsCsv({ fileName })
+    },
+
+    exportToExcel: (fileName = 'export.xlsx') => {
+      gridRef.current?.api?.exportDataAsExcel({ fileName })
+    },
+
+    setFilterModel: (filterModel: Record<string, unknown>) => {
+      gridRef.current?.api?.setFilterModel(filterModel)
+    },
+
+    getFilterModel: () => {
+      return gridRef.current?.api?.getFilterModel() ?? null
+    },
+
+    setSortModel: (sortModel: Array<{ colId: string; sort: 'asc' | 'desc' }>) => {
+      gridRef.current?.api?.applyColumnState({
+        state: sortModel.map((s) => ({ colId: s.colId, sort: s.sort })),
+        defaultState: { sort: null },
+      })
+    },
+
+    getSortModel: () => {
+      const columnState = gridRef.current?.api?.getColumnState() ?? []
+      return columnState
+        .filter((col) => col.sort)
+        .map((col) => ({ colId: col.colId, sort: col.sort })) as Array<{
+        colId: string
+        sort: 'asc' | 'desc' | null
+      }>
+    },
+
+    showLoadingOverlay: () => {
+      gridRef.current?.api?.showLoadingOverlay()
+    },
+
+    hideOverlay: () => {
+      gridRef.current?.api?.hideOverlay()
+    },
+
+    getDisplayedRowCount: () => {
+      return gridRef.current?.api?.getDisplayedRowCount() ?? 0
+    },
+  }))
 
   // Default column configuration - merge with any custom defaults
   const defaultColDef = useMemo<ColDef<T>>(
@@ -258,5 +394,37 @@ export function ServerSideGrid<T extends object>({
     </div>
   )
 }
+
+/**
+ * Reusable AG Grid component with Server-Side Row Model
+ *
+ * Wrapped with forwardRef to expose imperative handle to parent components.
+ * Use the ref to access grid operations like refreshData, getSelectedRows, etc.
+ *
+ * @example
+ * ```tsx
+ * const gridRef = useRef<ServerSideGridHandle<MyDataType>>(null)
+ *
+ * // Refresh data
+ * gridRef.current?.refreshData()
+ *
+ * // Get selected rows
+ * const selected = gridRef.current?.getSelectedRows()
+ *
+ * // Export to CSV
+ * gridRef.current?.exportToCsv('my-export.csv')
+ *
+ * return (
+ *   <ServerSideGrid<MyDataType>
+ *     ref={gridRef}
+ *     columnDefs={columns}
+ *     fetchUrl="/api/data"
+ *   />
+ * )
+ * ```
+ */
+export const ServerSideGrid = forwardRef(ServerSideGridInner) as <T extends object>(
+  props: ServerSideGridProps<T> & { ref?: React.ForwardedRef<ServerSideGridHandle<T>> }
+) => React.ReactElement
 
 export default ServerSideGrid

@@ -11,6 +11,7 @@ const navGroups = [
     title: 'Trade Activity Reports',
     items: [
       { label: 'Block Level', to: '/trade-activity/block-level' },
+      { label: 'Allocation Level', to: '/trade-activity/allocation-level' },
       { label: 'Summary', to: '/trade-activity/summary' },
     ],
   },

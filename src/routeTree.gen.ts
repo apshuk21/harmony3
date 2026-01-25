@@ -18,9 +18,13 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_a
 import { Route as AuthenticatedAppTradeActivityIndexRouteImport } from './routes/_authenticated/_app/trade-activity/index'
 import { Route as AuthenticatedAppTradeActivitySummaryRouteImport } from './routes/_authenticated/_app/trade-activity/summary'
 import { Route as AuthenticatedAppTradeActivityBlockLevelRouteImport } from './routes/_authenticated/_app/trade-activity/block-level'
+import { Route as AuthenticatedAppTradeActivityAllocationLevelRouteImport } from './routes/_authenticated/_app/trade-activity/allocation-level'
 import { Route as AuthenticatedAppTradeActivityBlockLevelIndexRouteImport } from './routes/_authenticated/_app/trade-activity/block-level/index'
+import { Route as AuthenticatedAppTradeActivityAllocationLevelIndexRouteImport } from './routes/_authenticated/_app/trade-activity/allocation-level/index'
 import { Route as AuthenticatedAppTradeActivityBlockLevelFxOptionsRouteImport } from './routes/_authenticated/_app/trade-activity/block-level/fx-options'
 import { Route as AuthenticatedAppTradeActivityBlockLevelFxCashRouteImport } from './routes/_authenticated/_app/trade-activity/block-level/fx-cash'
+import { Route as AuthenticatedAppTradeActivityAllocationLevelFxOptionsRouteImport } from './routes/_authenticated/_app/trade-activity/allocation-level/fx-options'
+import { Route as AuthenticatedAppTradeActivityAllocationLevelFxCashRouteImport } from './routes/_authenticated/_app/trade-activity/allocation-level/fx-cash'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
@@ -67,11 +71,23 @@ const AuthenticatedAppTradeActivityBlockLevelRoute =
     path: '/trade-activity/block-level',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppTradeActivityAllocationLevelRoute =
+  AuthenticatedAppTradeActivityAllocationLevelRouteImport.update({
+    id: '/trade-activity/allocation-level',
+    path: '/trade-activity/allocation-level',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppTradeActivityBlockLevelIndexRoute =
   AuthenticatedAppTradeActivityBlockLevelIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAppTradeActivityBlockLevelRoute,
+  } as any)
+const AuthenticatedAppTradeActivityAllocationLevelIndexRoute =
+  AuthenticatedAppTradeActivityAllocationLevelIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppTradeActivityAllocationLevelRoute,
   } as any)
 const AuthenticatedAppTradeActivityBlockLevelFxOptionsRoute =
   AuthenticatedAppTradeActivityBlockLevelFxOptionsRouteImport.update({
@@ -85,16 +101,32 @@ const AuthenticatedAppTradeActivityBlockLevelFxCashRoute =
     path: '/fx-cash',
     getParentRoute: () => AuthenticatedAppTradeActivityBlockLevelRoute,
   } as any)
+const AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute =
+  AuthenticatedAppTradeActivityAllocationLevelFxOptionsRouteImport.update({
+    id: '/fx-options',
+    path: '/fx-options',
+    getParentRoute: () => AuthenticatedAppTradeActivityAllocationLevelRoute,
+  } as any)
+const AuthenticatedAppTradeActivityAllocationLevelFxCashRoute =
+  AuthenticatedAppTradeActivityAllocationLevelFxCashRouteImport.update({
+    id: '/fx-cash',
+    path: '/fx-cash',
+    getParentRoute: () => AuthenticatedAppTradeActivityAllocationLevelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof PublicLoginRoute
   '/logout': typeof PublicLogoutRoute
+  '/trade-activity/allocation-level': typeof AuthenticatedAppTradeActivityAllocationLevelRouteWithChildren
   '/trade-activity/block-level': typeof AuthenticatedAppTradeActivityBlockLevelRouteWithChildren
   '/trade-activity/summary': typeof AuthenticatedAppTradeActivitySummaryRoute
   '/trade-activity': typeof AuthenticatedAppTradeActivityIndexRoute
+  '/trade-activity/allocation-level/fx-cash': typeof AuthenticatedAppTradeActivityAllocationLevelFxCashRoute
+  '/trade-activity/allocation-level/fx-options': typeof AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute
   '/trade-activity/block-level/fx-cash': typeof AuthenticatedAppTradeActivityBlockLevelFxCashRoute
   '/trade-activity/block-level/fx-options': typeof AuthenticatedAppTradeActivityBlockLevelFxOptionsRoute
+  '/trade-activity/allocation-level/': typeof AuthenticatedAppTradeActivityAllocationLevelIndexRoute
   '/trade-activity/block-level/': typeof AuthenticatedAppTradeActivityBlockLevelIndexRoute
 }
 export interface FileRoutesByTo {
@@ -103,8 +135,11 @@ export interface FileRoutesByTo {
   '/logout': typeof PublicLogoutRoute
   '/trade-activity/summary': typeof AuthenticatedAppTradeActivitySummaryRoute
   '/trade-activity': typeof AuthenticatedAppTradeActivityIndexRoute
+  '/trade-activity/allocation-level/fx-cash': typeof AuthenticatedAppTradeActivityAllocationLevelFxCashRoute
+  '/trade-activity/allocation-level/fx-options': typeof AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute
   '/trade-activity/block-level/fx-cash': typeof AuthenticatedAppTradeActivityBlockLevelFxCashRoute
   '/trade-activity/block-level/fx-options': typeof AuthenticatedAppTradeActivityBlockLevelFxOptionsRoute
+  '/trade-activity/allocation-level': typeof AuthenticatedAppTradeActivityAllocationLevelIndexRoute
   '/trade-activity/block-level': typeof AuthenticatedAppTradeActivityBlockLevelIndexRoute
 }
 export interface FileRoutesById {
@@ -115,11 +150,15 @@ export interface FileRoutesById {
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_public/login': typeof PublicLoginRoute
   '/_public/logout': typeof PublicLogoutRoute
+  '/_authenticated/_app/trade-activity/allocation-level': typeof AuthenticatedAppTradeActivityAllocationLevelRouteWithChildren
   '/_authenticated/_app/trade-activity/block-level': typeof AuthenticatedAppTradeActivityBlockLevelRouteWithChildren
   '/_authenticated/_app/trade-activity/summary': typeof AuthenticatedAppTradeActivitySummaryRoute
   '/_authenticated/_app/trade-activity/': typeof AuthenticatedAppTradeActivityIndexRoute
+  '/_authenticated/_app/trade-activity/allocation-level/fx-cash': typeof AuthenticatedAppTradeActivityAllocationLevelFxCashRoute
+  '/_authenticated/_app/trade-activity/allocation-level/fx-options': typeof AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute
   '/_authenticated/_app/trade-activity/block-level/fx-cash': typeof AuthenticatedAppTradeActivityBlockLevelFxCashRoute
   '/_authenticated/_app/trade-activity/block-level/fx-options': typeof AuthenticatedAppTradeActivityBlockLevelFxOptionsRoute
+  '/_authenticated/_app/trade-activity/allocation-level/': typeof AuthenticatedAppTradeActivityAllocationLevelIndexRoute
   '/_authenticated/_app/trade-activity/block-level/': typeof AuthenticatedAppTradeActivityBlockLevelIndexRoute
 }
 export interface FileRouteTypes {
@@ -128,11 +167,15 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/logout'
+    | '/trade-activity/allocation-level'
     | '/trade-activity/block-level'
     | '/trade-activity/summary'
     | '/trade-activity'
+    | '/trade-activity/allocation-level/fx-cash'
+    | '/trade-activity/allocation-level/fx-options'
     | '/trade-activity/block-level/fx-cash'
     | '/trade-activity/block-level/fx-options'
+    | '/trade-activity/allocation-level/'
     | '/trade-activity/block-level/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,8 +184,11 @@ export interface FileRouteTypes {
     | '/logout'
     | '/trade-activity/summary'
     | '/trade-activity'
+    | '/trade-activity/allocation-level/fx-cash'
+    | '/trade-activity/allocation-level/fx-options'
     | '/trade-activity/block-level/fx-cash'
     | '/trade-activity/block-level/fx-options'
+    | '/trade-activity/allocation-level'
     | '/trade-activity/block-level'
   id:
     | '__root__'
@@ -152,11 +198,15 @@ export interface FileRouteTypes {
     | '/_authenticated/_app'
     | '/_public/login'
     | '/_public/logout'
+    | '/_authenticated/_app/trade-activity/allocation-level'
     | '/_authenticated/_app/trade-activity/block-level'
     | '/_authenticated/_app/trade-activity/summary'
     | '/_authenticated/_app/trade-activity/'
+    | '/_authenticated/_app/trade-activity/allocation-level/fx-cash'
+    | '/_authenticated/_app/trade-activity/allocation-level/fx-options'
     | '/_authenticated/_app/trade-activity/block-level/fx-cash'
     | '/_authenticated/_app/trade-activity/block-level/fx-options'
+    | '/_authenticated/_app/trade-activity/allocation-level/'
     | '/_authenticated/_app/trade-activity/block-level/'
   fileRoutesById: FileRoutesById
 }
@@ -231,12 +281,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTradeActivityBlockLevelRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/trade-activity/allocation-level': {
+      id: '/_authenticated/_app/trade-activity/allocation-level'
+      path: '/trade-activity/allocation-level'
+      fullPath: '/trade-activity/allocation-level'
+      preLoaderRoute: typeof AuthenticatedAppTradeActivityAllocationLevelRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/trade-activity/block-level/': {
       id: '/_authenticated/_app/trade-activity/block-level/'
       path: '/'
       fullPath: '/trade-activity/block-level/'
       preLoaderRoute: typeof AuthenticatedAppTradeActivityBlockLevelIndexRouteImport
       parentRoute: typeof AuthenticatedAppTradeActivityBlockLevelRoute
+    }
+    '/_authenticated/_app/trade-activity/allocation-level/': {
+      id: '/_authenticated/_app/trade-activity/allocation-level/'
+      path: '/'
+      fullPath: '/trade-activity/allocation-level/'
+      preLoaderRoute: typeof AuthenticatedAppTradeActivityAllocationLevelIndexRouteImport
+      parentRoute: typeof AuthenticatedAppTradeActivityAllocationLevelRoute
     }
     '/_authenticated/_app/trade-activity/block-level/fx-options': {
       id: '/_authenticated/_app/trade-activity/block-level/fx-options'
@@ -252,8 +316,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTradeActivityBlockLevelFxCashRouteImport
       parentRoute: typeof AuthenticatedAppTradeActivityBlockLevelRoute
     }
+    '/_authenticated/_app/trade-activity/allocation-level/fx-options': {
+      id: '/_authenticated/_app/trade-activity/allocation-level/fx-options'
+      path: '/fx-options'
+      fullPath: '/trade-activity/allocation-level/fx-options'
+      preLoaderRoute: typeof AuthenticatedAppTradeActivityAllocationLevelFxOptionsRouteImport
+      parentRoute: typeof AuthenticatedAppTradeActivityAllocationLevelRoute
+    }
+    '/_authenticated/_app/trade-activity/allocation-level/fx-cash': {
+      id: '/_authenticated/_app/trade-activity/allocation-level/fx-cash'
+      path: '/fx-cash'
+      fullPath: '/trade-activity/allocation-level/fx-cash'
+      preLoaderRoute: typeof AuthenticatedAppTradeActivityAllocationLevelFxCashRouteImport
+      parentRoute: typeof AuthenticatedAppTradeActivityAllocationLevelRoute
+    }
   }
 }
+
+interface AuthenticatedAppTradeActivityAllocationLevelRouteChildren {
+  AuthenticatedAppTradeActivityAllocationLevelFxCashRoute: typeof AuthenticatedAppTradeActivityAllocationLevelFxCashRoute
+  AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute: typeof AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute
+  AuthenticatedAppTradeActivityAllocationLevelIndexRoute: typeof AuthenticatedAppTradeActivityAllocationLevelIndexRoute
+}
+
+const AuthenticatedAppTradeActivityAllocationLevelRouteChildren: AuthenticatedAppTradeActivityAllocationLevelRouteChildren =
+  {
+    AuthenticatedAppTradeActivityAllocationLevelFxCashRoute:
+      AuthenticatedAppTradeActivityAllocationLevelFxCashRoute,
+    AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute:
+      AuthenticatedAppTradeActivityAllocationLevelFxOptionsRoute,
+    AuthenticatedAppTradeActivityAllocationLevelIndexRoute:
+      AuthenticatedAppTradeActivityAllocationLevelIndexRoute,
+  }
+
+const AuthenticatedAppTradeActivityAllocationLevelRouteWithChildren =
+  AuthenticatedAppTradeActivityAllocationLevelRoute._addFileChildren(
+    AuthenticatedAppTradeActivityAllocationLevelRouteChildren,
+  )
 
 interface AuthenticatedAppTradeActivityBlockLevelRouteChildren {
   AuthenticatedAppTradeActivityBlockLevelFxCashRoute: typeof AuthenticatedAppTradeActivityBlockLevelFxCashRoute
@@ -277,12 +376,15 @@ const AuthenticatedAppTradeActivityBlockLevelRouteWithChildren =
   )
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppTradeActivityAllocationLevelRoute: typeof AuthenticatedAppTradeActivityAllocationLevelRouteWithChildren
   AuthenticatedAppTradeActivityBlockLevelRoute: typeof AuthenticatedAppTradeActivityBlockLevelRouteWithChildren
   AuthenticatedAppTradeActivitySummaryRoute: typeof AuthenticatedAppTradeActivitySummaryRoute
   AuthenticatedAppTradeActivityIndexRoute: typeof AuthenticatedAppTradeActivityIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppTradeActivityAllocationLevelRoute:
+    AuthenticatedAppTradeActivityAllocationLevelRouteWithChildren,
   AuthenticatedAppTradeActivityBlockLevelRoute:
     AuthenticatedAppTradeActivityBlockLevelRouteWithChildren,
   AuthenticatedAppTradeActivitySummaryRoute:

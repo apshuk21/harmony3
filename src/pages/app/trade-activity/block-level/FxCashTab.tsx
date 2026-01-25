@@ -1,11 +1,16 @@
 /**
  * FX Cash tab content
  * Displays FX Cash trade data using AG Grid Server-Side Row Model
+ *
+ * Uses Zod-validated search params from the route.
+ * Reference: docs/harmony/15-zod-validation-guide.md
  */
 import { useMemo, useState } from 'react'
+import { useSearch, useNavigate } from '@tanstack/react-router'
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community'
 import { ServerSideGrid } from '@/components/ui'
 import type { FxCashTrade } from '@/mocks/data/fx-cash'
+import type { FxCashSearchParams } from '@/routes/_authenticated/_app/trade-activity/block-level/fx-cash'
 
 /**
  * Format number as currency with commas
@@ -27,6 +32,23 @@ function formatRate(value: number): string {
 
 export function FxCashTab() {
   const [selectedRows, setSelectedRows] = useState<FxCashTrade[]>([])
+
+  // Get validated search params from URL (typed via Zod schema)
+  const searchParams = useSearch({
+    from: '/_authenticated/_app/trade-activity/block-level/fx-cash',
+  })
+
+  // Navigate function for updating search params
+  const navigate = useNavigate({
+    from: '/trade-activity/block-level/fx-cash',
+  })
+
+  // Update search params (e.g., when user changes status filter)
+  const updateSearch = (updates: Partial<FxCashSearchParams>) => {
+    navigate({
+      search: (prev) => ({ ...prev, ...updates }),
+    })
+  }
 
   // Column definitions for FX Cash trades
   const columnDefs = useMemo<ColDef<FxCashTrade>[]>(
@@ -138,7 +160,46 @@ export function FxCashTab() {
   return (
     <div className="tab-panel">
       <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ margin: 0 }}>FX Cash Trades</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0 }}>FX Cash Trades</h3>
+
+          {/* Status filter using Zod-validated search params */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label htmlFor="status-filter" style={{ fontSize: '14px', color: '#666' }}>
+              Status:
+            </label>
+            <select
+              id="status-filter"
+              value={searchParams.status}
+              onChange={(e) => updateSearch({ status: e.target.value as typeof searchParams.status })}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+              }}
+            >
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+
+            {/* Search input */}
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchParams.search ?? ''}
+              onChange={(e) => updateSearch({ search: e.target.value || undefined })}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+                width: '150px',
+              }}
+            />
+          </div>
+        </div>
+
         {selectedRows.length > 0 && (
           <p style={{ margin: '8px 0 0', color: '#666' }}>
             {selectedRows.length} trade{selectedRows.length !== 1 ? 's' : ''} selected

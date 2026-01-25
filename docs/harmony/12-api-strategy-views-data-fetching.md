@@ -22,7 +22,7 @@ This document outlines the recommended API strategy for fetching view-specific d
 10. [Code Examples](#code-examples)
 11. [Tab-Based Pages: Applying the Hybrid Strategy](#tab-based-pages-applying-the-hybrid-strategy)
 12. [Design Decision Analysis: Why Separate /stats Endpoint?](#design-decision-analysis-why-separate-stats-endpoint)
-13. [Design Decision Analysis: Parallel Calls Coupling](#design-decision-analysis-parallel-calls-coupling)
+13. [Design Decision Analysis: Dependent Queries — Config → Data + Stats](#design-decision-analysis-dependent-queries--config--data--stats)
 
 ---
 
@@ -509,16 +509,19 @@ queryClient.setQueryData(
 │                                                                             │
 │   Total: ~1500ms                                                            │
 │                                                                             │
-│   ✅ GOOD: Parallel with Smart Dependencies                                 │
-│   ──────────────────────────────────────────                                │
+│   ✅ GOOD: Dependent Queries with Parallel Data Fetching                    │
+│   ──────────────────────────────────────────────────────                    │
 │                                                                             │
 │   Time ──────────────────────────────────────────────────────────────►     │
+│   0ms        300ms        600ms        900ms                                │
 │                                                                             │
 │   Config   ████████████                                                     │
-│   Stats    ████████                                                         │
-│   Data             ████████████████████  (starts after config ready)        │
+│   Stats                ████████████████  (needs ID from config)             │
+│   Data                 ████████████████████  (needs ID from config)         │
 │                                                                             │
-│   Total: ~800ms (Config + Data, Stats parallel)                            │
+│   Config (~300ms) fetches first (provides ID for stats/data).               │
+│   Stats (~400ms) and Data (~500ms) start in parallel after Config.          │
+│   Total: ~800ms (300ms Config + max(400ms Stats, 500ms Data))              │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -1299,6 +1302,7 @@ GET  /api/tabs/{tabId}/stats                     → Chips counts
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface TabConfig {
+  id: string              // ID needed by /data and /stats POST payloads
   tabId: string
   tabLabel: string
   viewId: string
@@ -1318,10 +1322,10 @@ export const tabQueryKeys = {
   all: ['tabs'] as const,
   config: (tabId: string, viewId: string) =>
     ['tabs', tabId, 'config', viewId] as const,
-  data: (tabId: string, params: DataParams) =>
-    ['tabs', tabId, 'data', params] as const,
-  stats: (tabId: string, dateRange: DateRange) =>
-    ['tabs', tabId, 'stats', dateRange] as const,
+  data: (tabId: string, configId: string, params: DataParams) =>
+    ['tabs', tabId, 'data', configId, params] as const,
+  stats: (tabId: string, configId: string | undefined, dateRange: DateRange) =>
+    ['tabs', tabId, 'stats', configId, dateRange] as const,
 }
 
 // Main hook for tab-based pages
@@ -1332,22 +1336,24 @@ export function useTabData(
 ) {
   const queryClient = useQueryClient()
 
-  // Fetch config and stats in parallel
-  const [configQuery, statsQuery] = useQueries({
-    queries: [
-      {
-        queryKey: tabQueryKeys.config(tabId, viewId),
-        queryFn: () => fetchTabConfig(tabId, viewId),
-        staleTime: 5 * 60 * 1000,  // 5 minutes
-        gcTime: 30 * 60 * 1000,    // 30 minutes
-      },
-      {
-        queryKey: tabQueryKeys.stats(tabId, dateRange),
-        queryFn: () => fetchTabStats(tabId, dateRange),
-        staleTime: 30 * 1000,      // 30 seconds
-        gcTime: 5 * 60 * 1000,     // 5 minutes
-      },
-    ],
+  // Step 1: Fetch config first (provides ID needed by data/stats)
+  const configQuery = useQuery({
+    queryKey: tabQueryKeys.config(tabId, viewId),
+    queryFn: () => fetchTabConfig(tabId, viewId),
+    staleTime: 5 * 60 * 1000,  // 5 minutes
+    gcTime: 30 * 60 * 1000,    // 30 minutes
+  })
+
+  // Extract the ID from config response
+  const configId = configQuery.data?.id
+
+  // Step 2: Stats fires after config (needs ID in POST payload)
+  const statsQuery = useQuery({
+    queryKey: tabQueryKeys.stats(tabId, configId, dateRange),
+    queryFn: () => fetchTabStats(tabId, configId!, dateRange),  // POST with ID
+    enabled: !!configId,       // Waits for config to provide ID
+    staleTime: 30 * 1000,      // 30 seconds
+    gcTime: 5 * 60 * 1000,     // 5 minutes
   })
 
   // Prefetch other tab's config when hovering
@@ -1355,10 +1361,6 @@ export function useTabData(
     queryClient.prefetchQuery({
       queryKey: tabQueryKeys.config(targetTabId, 'default'),
       queryFn: () => fetchTabConfig(targetTabId, 'default'),
-    })
-    queryClient.prefetchQuery({
-      queryKey: tabQueryKeys.stats(targetTabId, dateRange),
-      queryFn: () => fetchTabStats(targetTabId, dateRange),
     })
   }
 
@@ -1374,7 +1376,7 @@ export function useTabData(
     config: configQuery.data,
     configLoading: configQuery.isLoading,
     stats: statsQuery.data,
-    statsLoading: statsQuery.isLoading,
+    statsLoading: statsQuery.isPending,  // isPending covers disabled + loading
     prefetchTab,
     prefetchView,
   }
@@ -1658,230 +1660,310 @@ This is an excellent architectural question. Let's analyze the trade-offs.
 
 ---
 
-## Design Decision Analysis: Parallel Calls Coupling
+## Design Decision Analysis: Dependent Queries — Config → Data + Stats
 
 ### The Question
 
-> You made parallel calls for /config and /stats. Doesn't it bind both calls together?
+> The `/data` and `/stats` calls both need an ID (or similar value) from the `/config` response in their request payload. This means `/stats` is also a POST call and cannot run in parallel with `/config`. Does this cause any issues?
 
-This is a subtle but important distinction. Let's clarify.
+No issues at all. This is a well-supported pattern in TanStack Query called **Dependent Queries**. The `enabled` option allows queries to wait for a prerequisite to resolve before firing.
 
 ---
 
-### What "Parallel" Actually Means
+### Updated Dependency Chain
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    PARALLEL vs COUPLED                                       │
+│                    UPDATED DEPENDENCY CHAIN                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│   "Parallel" = Started at the same time                                     │
-│   "Coupled" = Must complete together / depend on each other                 │
+│   BEFORE (Stats had no dependency on Config):                               │
+│   ─────────────────────────────────────────────                             │
 │                                                                             │
-│   These are DIFFERENT concepts!                                             │
+│   Config ──┐                                                                │
+│            ├──► Data (needs config)                                         │
+│   Stats ───┘   (Stats was independent)                                      │
 │                                                                             │
 │                                                                             │
-│   OUR IMPLEMENTATION:                                                       │
-│   ───────────────────                                                       │
+│   NOW (Stats also needs ID from Config):                                    │
+│   ──────────────────────────────────────                                    │
 │                                                                             │
-│   // Parallel fetch - INDEPENDENT completion                                │
-│   const [configQuery, statsQuery] = useQueries({                            │
-│     queries: [                                                              │
-│       { queryKey: ['config'], queryFn: fetchConfig },                       │
-│       { queryKey: ['stats'], queryFn: fetchStats },                         │
-│     ]                                                                       │
-│   })                                                                        │
+│            ┌──► Data  (POST, needs ID from config)                          │
+│   Config ──┤                                                                │
+│            └──► Stats (POST, needs ID from config)                          │
 │                                                                             │
-│   // Each query resolves independently!                                     │
-│   // UI can react to each as it completes                                   │
 │                                                                             │
-│   return (                                                                  │
-│     <>                                                                      │
-│       {/* Chips render as soon as stats is ready */}                        │
-│       <ChipsBar                                                             │
-│         chips={statsQuery.data?.chips}                                      │
-│         loading={statsQuery.isLoading}                                      │
-│       />                                                                    │
-│                                                                             │
-│       {/* Grid renders as soon as config is ready */}                       │
-│       {configQuery.isLoading ? (                                            │
-│         <Skeleton />                                                        │
-│       ) : (                                                                 │
-│         <Grid columnDefs={configQuery.data.columnDefs} />                   │
-│       )}                                                                    │
-│     </>                                                                     │
-│   )                                                                         │
+│   KEY CHANGES:                                                              │
+│   • /stats is now POST (not GET) — needs payload with ID                   │
+│   • /stats depends on /config — cannot start until config resolves          │
+│   • /data and /stats run in parallel AFTER /config                          │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Timeline: How Parallel Requests Complete Independently
+### Timeline Comparison
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    PARALLEL REQUEST TIMELINE                                 │
+│                    TIMELINE: BEFORE vs NOW                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │   Time ──────────────────────────────────────────────────────────────►     │
-│   0ms     100ms    200ms    300ms    400ms    500ms    600ms               │
-│   │        │        │        │        │        │        │                  │
-│                                                                             │
-│   SCENARIO A: Stats faster than Config                                      │
-│   ─────────────────────────────────────                                     │
-│                                                                             │
-│   Config  ████████████████████████████████████  (500ms)                    │
-│   Stats   ████████████  (200ms)                                            │
-│                        ↑                                                    │
-│                        │                                                    │
-│                   Stats ready!                                              │
-│                   → Chips render                                            │
-│                   → Grid still loading                                      │
-│                                            ↑                                │
-│                                            │                                │
-│                                       Config ready!                         │
-│                                       → Grid renders                        │
-│                                                                             │
-│   User sees: Chips appear first, then grid appears                          │
+│   0ms        300ms        600ms        900ms                                │
 │                                                                             │
 │                                                                             │
-│   SCENARIO B: Config faster than Stats                                      │
-│   ─────────────────────────────────────                                     │
+│   BEFORE: Config + Stats parallel, Data after Config                        │
+│   ──────────────────────────────────────────────────                        │
 │                                                                             │
-│   Config  ████████████  (200ms)                                            │
-│   Stats   ████████████████████████████████████  (500ms)                    │
-│                        ↑                                                    │
-│                        │                                                    │
-│                   Config ready!                                             │
-│                   → Grid shell renders                                      │
-│                   → Chips still loading (skeleton)                          │
-│                                            ↑                                │
-│                                            │                                │
-│                                       Stats ready!                          │
-│                                       → Chips render                        │
+│   Config   ████████████                                                     │
+│   Stats    ████████████████  (independent, starts at 0ms)                  │
+│   Data                 ████████████████████  (after config)                 │
 │                                                                             │
-│   User sees: Grid appears first, chips appear after                         │
+│   Total: ~800ms (300ms Config + 500ms Data)                                │
+│   Stats finishes during Config, so it's "free"                              │
 │                                                                             │
 │                                                                             │
-│   SCENARIO C: Stats fails, Config succeeds                                  │
-│   ────────────────────────────────────────                                  │
+│   NOW: Config first, then Data + Stats parallel                             │
+│   ─────────────────────────────────────────────                             │
 │                                                                             │
-│   Config  ████████████  (200ms) ✅                                         │
-│   Stats   ████████████  (200ms) ❌ Error                                   │
+│   Config   ████████████                                                     │
+│   Stats                ████████████████  (POST, needs ID from config)       │
+│   Data                 ████████████████████  (POST, needs ID from config)   │
 │                                                                             │
-│   User sees:                                                                │
-│   • Grid renders normally with data                                         │
-│   • Chips show "--" or retry button                                        │
-│   • App is still usable!                                                    │
+│   Total: ~800ms (300ms Config + max(400ms Stats, 500ms Data))              │
+│   Stats and Data start together after Config completes                      │
 │                                                                             │
 │                                                                             │
-│   KEY INSIGHT: Parallel ≠ Coupled                                           │
-│   ───────────────────────────────                                           │
-│   • Requests START together                                                 │
-│   • Requests COMPLETE independently                                         │
-│   • UI REACTS to each independently                                         │
-│   • FAILURES are isolated                                                   │
+│   DIFFERENCE:                                                               │
+│   ───────────                                                               │
+│   • If Stats < Config time: No difference (was "free" before, same now)    │
+│   • If Stats > Config time: Slightly slower now, but only by the           │
+│     amount Stats exceeds Data. Usually negligible since Stats is a          │
+│     simple aggregation query (faster than Data).                            │
+│                                                                             │
+│   In practice: Stats (aggregation) is almost always faster than             │
+│   Data (paginated rows), so total time remains the same: Config + Data.    │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Contrasting with True Coupling
+### Why This Doesn't Cause Issues
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    PARALLEL vs COUPLED vs WATERFALL                          │
+│                    WHY NO ISSUES?                                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│   WATERFALL (Sequential) ❌                                                 │
-│   ────────────────────────                                                  │
-│                                                                             │
-│   const config = await fetchConfig()  // Wait 500ms                         │
-│   const stats = await fetchStats()    // Then wait 300ms                    │
-│   // Total: 800ms                                                           │
-│                                                                             │
-│   Config  ████████████████████                                              │
-│   Stats                       ████████████                                  │
-│   Total   ══════════════════════════════════  (800ms)                      │
-│                                                                             │
-│                                                                             │
-│   COUPLED (Wait for All) ⚠️                                                 │
-│   ─────────────────────────                                                 │
-│                                                                             │
-│   const [config, stats] = await Promise.all([                               │
-│     fetchConfig(),                                                          │
-│     fetchStats()                                                            │
-│   ])                                                                        │
-│   // Can't use either until BOTH complete                                   │
-│                                                                             │
-│   Config  ████████████████████                                              │
-│   Stats   ████████████                                                      │
-│   Wait    ════════════════════  (must wait for slowest)                    │
-│   Render                      │ (everything renders at once)               │
-│                                                                             │
-│                                                                             │
-│   PARALLEL INDEPENDENT (Our Approach) ✅                                    │
+│   1. TOTAL TIME IS ESSENTIALLY THE SAME                                     │
 │   ──────────────────────────────────────                                    │
 │                                                                             │
-│   // Using useQueries - each resolves independently                         │
-│   const [configQuery, statsQuery] = useQueries(...)                         │
+│   Before: Config(300ms) + Data(500ms) = 800ms                              │
+│           Stats(400ms) was hidden under Config+Data timeline                │
 │                                                                             │
-│   Config  ████████████████████                                              │
-│   Stats   ████████████                                                      │
-│                       ↑        ↑                                            │
-│                       │        │                                            │
-│                  Chips render  Grid renders                                 │
-│                  immediately   when ready                                   │
+│   Now:    Config(300ms) + max(Data(500ms), Stats(400ms)) = 800ms           │
+│           Stats runs parallel with Data, still hidden                       │
 │                                                                             │
-│   // PROGRESSIVE RENDERING - best UX!                                       │
+│   As long as Stats ≤ Data in duration (which it almost always is,          │
+│   since aggregation is cheaper than paginated data), the total time         │
+│   is identical: Config + Data.                                              │
+│                                                                             │
+│                                                                             │
+│   2. PROGRESSIVE RENDERING STILL WORKS                                      │
+│   ─────────────────────────────────────                                     │
+│                                                                             │
+│   After Config resolves:                                                    │
+│   • Grid skeleton can render (we have column definitions)                  │
+│   • Data and Stats fire in parallel                                         │
+│   • Chips render as soon as Stats resolves                                  │
+│   • Grid rows render as soon as Data resolves                               │
+│                                                                             │
+│                                                                             │
+│   3. ERROR ISOLATION STILL WORKS                                            │
+│   ──────────────────────────────                                            │
+│                                                                             │
+│   • Stats fails? → Grid still loads fine, chips show error/retry            │
+│   • Data fails? → Chips still show fine, grid shows error/retry             │
+│   • Config fails? → Neither fires, show full error state with retry         │
+│                                                                             │
+│                                                                             │
+│   4. CACHING STILL WORKS                                                    │
+│   ──────────────────────                                                    │
+│                                                                             │
+│   • Config cached for 5 minutes → on revisit, instantly provides ID        │
+│   • Stats and Data can fire immediately using cached config ID              │
+│   • Subsequent visits skip the Config wait entirely                         │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Implementation: Truly Independent Parallel Queries
+### Implementation: Dependent Queries with `enabled`
 
 ```typescript
 // src/hooks/useTabData.ts
 
 export function useTabData(tabId: string, viewId: string, dateRange: DateRange) {
-  // These run in parallel but complete INDEPENDENTLY
+  // Step 1: Fetch config first (provides the ID needed by data/stats)
   const configQuery = useQuery({
     queryKey: ['tabs', tabId, 'config', viewId],
     queryFn: () => fetchConfig(tabId, viewId),
     staleTime: 5 * 60 * 1000,
   })
 
+  // Extract the ID from config response
+  const configId = configQuery.data?.id
+
+  // Step 2: Data and Stats fire in parallel, AFTER config provides the ID
   const statsQuery = useQuery({
-    queryKey: ['tabs', tabId, 'stats', dateRange],
-    queryFn: () => fetchStats(tabId, dateRange),
+    queryKey: ['tabs', tabId, 'stats', configId, dateRange],
+    queryFn: () => fetchStats(tabId, configId!, dateRange),  // POST with ID
+    enabled: !!configId,  // Only runs when configId is available
     staleTime: 30 * 1000,
   })
 
-  // Each can be used independently in the UI
+  const dataQuery = useQuery({
+    queryKey: ['tabs', tabId, 'data', configId, dateRange],
+    queryFn: () => fetchData(tabId, configId!, dateRange),   // POST with ID
+    enabled: !!configId,  // Only runs when configId is available
+    staleTime: 0,         // Always fresh
+  })
+
   return {
     // Config state
     config: configQuery.data,
     configLoading: configQuery.isLoading,
     configError: configQuery.error,
 
-    // Stats state (completely independent)
+    // Stats state (dependent on config, parallel with data)
     stats: statsQuery.data,
-    statsLoading: statsQuery.isLoading,
+    statsLoading: statsQuery.isLoading || configQuery.isLoading,
     statsError: statsQuery.error,
+
+    // Data state (dependent on config, parallel with stats)
+    data: dataQuery.data,
+    dataLoading: dataQuery.isLoading || configQuery.isLoading,
+    dataError: dataQuery.error,
   }
 }
+```
 
-// In component - each section renders when its data is ready
-function TabContent() {
-  const { config, configLoading, stats, statsLoading } = useTabData(...)
+---
+
+### How `enabled` Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    TanStack Query `enabled` OPTION                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   enabled: !!configId                                                       │
+│                                                                             │
+│   When configId is undefined (config hasn't loaded yet):                    │
+│   • Query is in "disabled" state                                            │
+│   • No network request is made                                              │
+│   • isLoading is false (query hasn't started, it's "idle")                 │
+│   • fetchStatus is "idle"                                                   │
+│                                                                             │
+│   When configId becomes defined (config loaded):                            │
+│   • Query automatically fires                                               │
+│   • isLoading becomes true                                                  │
+│   • fetchStatus is "fetching"                                               │
+│                                                                             │
+│   This is why we check BOTH in the loading state:                           │
+│   statsLoading: statsQuery.isLoading || configQuery.isLoading              │
+│                                                                             │
+│   Because when config is loading, stats hasn't even started yet             │
+│   (it's idle, not loading), so we need to show loading UI for both.        │
+│                                                                             │
+│                                                                             │
+│   ALTERNATIVE: Use isPending for simpler check                              │
+│   ─────────────────────────────────────────────                             │
+│                                                                             │
+│   // isPending = true when query has no data yet (includes disabled)       │
+│   statsLoading: statsQuery.isPending                                       │
+│                                                                             │
+│   isPending is true when:                                                   │
+│   • Query is disabled (waiting for enabled)                                │
+│   • Query is fetching for the first time                                    │
+│   • Query has no cached data                                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Updated Endpoint Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    UPDATED ENDPOINT STRUCTURE                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Endpoint 1: Configuration (GET)                                           │
+│   ────────────────────────────────                                          │
+│   GET /api/tabs/{tabId}/config?viewId={viewId}                             │
+│                                                                             │
+│   Returns: {                                                                │
+│     id: "abc-123",            ← ID needed by data/stats                    │
+│     columnDefs: [...],                                                      │
+│     savedFilters: {...},                                                    │
+│     availableViews: [...]                                                   │
+│   }                                                                         │
+│                                                                             │
+│                                                                             │
+│   Endpoint 2: Data (POST) — depends on config                              │
+│   ────────────────────────────────────────────                              │
+│   POST /api/tabs/{tabId}/data                                              │
+│                                                                             │
+│   Request: {                                                                │
+│     id: "abc-123",            ← From config response                       │
+│     startRow: 0,                                                            │
+│     endRow: 100,                                                            │
+│     sortModel: [...],                                                       │
+│     filterModel: {...}                                                      │
+│   }                                                                         │
+│   Returns: { rowData: [...], rowCount: 1250 }                              │
+│                                                                             │
+│                                                                             │
+│   Endpoint 3: Stats (POST) — depends on config                             │
+│   ─────────────────────────────────────────────                             │
+│   POST /api/tabs/{tabId}/stats                                             │
+│                                                                             │
+│   Request: {                                                                │
+│     id: "abc-123",            ← From config response                       │
+│     dateStart: "2024-01-01",                                                │
+│     dateEnd: "2024-12-31"                                                   │
+│   }                                                                         │
+│   Returns: { chips: { confirmed: 7, pending: 32 }, totalRecords: 46 }     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Component Implementation with Dependent Queries
+
+```typescript
+function TabContent({ tabId, viewId, dateRange }: TabContentProps) {
+  const {
+    config, configLoading, configError,
+    stats, statsLoading, statsError,
+    data, dataLoading, dataError,
+  } = useTabData(tabId, viewId, dateRange)
+
+  // Config error = nothing can load
+  if (configError) {
+    return <FullPageError message="Failed to load configuration" onRetry={...} />
+  }
 
   return (
     <>
-      {/* Chips render independently - as soon as stats is ready */}
+      {/* Chips: show skeleton during config OR stats loading */}
       {statsLoading ? (
         <ChipsSkeleton />
       ) : statsError ? (
@@ -1890,13 +1972,15 @@ function TabContent() {
         <ChipsBar chips={stats.chips} />
       )}
 
-      {/* Grid renders independently - as soon as config is ready */}
+      {/* Grid: show skeleton during config loading, then data handles its own loading */}
       {configLoading ? (
         <GridSkeleton />
-      ) : configError ? (
-        <GridError onRetry={refetchConfig} />
       ) : (
-        <ServerSideGrid columnDefs={config.columnDefs} />
+        <ServerSideGrid
+          columnDefs={config.columnDefs}
+          fetchUrl={`/api/tabs/${tabId}/data`}
+          fetchPayload={{ id: config.id }}  // Pass the ID from config
+        />
       )}
     </>
   )
@@ -1905,36 +1989,57 @@ function TabContent() {
 
 ---
 
-### Alternative: Using useQueries for Grouped Parallel Calls
+### Caching Optimization: Subsequent Visits
 
-```typescript
-// This is what we showed earlier - still independent!
-const [configQuery, statsQuery] = useQueries({
-  queries: [
-    { queryKey: ['config', tabId], queryFn: () => fetchConfig(tabId) },
-    { queryKey: ['stats', tabId], queryFn: () => fetchStats(tabId) },
-  ]
-})
-
-// useQueries is just syntactic sugar for multiple useQuery calls
-// Each query still completes independently!
-// The array is for convenience, not coupling
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SUBSEQUENT VISIT (Config cached)                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Time ──────────────────────────────────────────────────────────────►     │
+│   0ms        300ms        600ms        900ms                                │
+│                                                                             │
+│                                                                             │
+│   FIRST VISIT:                                                              │
+│   ─────────────                                                             │
+│                                                                             │
+│   Config   ████████████                                                     │
+│   Stats                ████████████████                                     │
+│   Data                 ████████████████████                                 │
+│                                                                             │
+│   Total: ~800ms                                                             │
+│                                                                             │
+│                                                                             │
+│   SUBSEQUENT VISIT (Config still in cache, staleTime: 5min):               │
+│   ──────────────────────────────────────────────────────────                │
+│                                                                             │
+│   Config   ▌ (instant — from cache, provides ID immediately)               │
+│   Stats    ████████████████                                                 │
+│   Data     ████████████████████                                             │
+│                                                                             │
+│   Total: ~500ms (skipped the 300ms Config wait!)                           │
+│                                                                             │
+│   Because Config is cached, the ID is available immediately.                │
+│   Stats and Data fire at 0ms instead of waiting for Config.                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Summary: Parallel Calls Design
+### Summary: Dependent Queries Design
 
 | Aspect | Our Implementation |
 |--------|-------------------|
-| Requests start | Together (parallel) |
-| Requests complete | Independently |
-| UI updates | As each completes (progressive) |
-| Error handling | Isolated per request |
-| Caching | Independent TTLs |
-| Refetching | Can refetch one without the other |
+| Config | Fetches first (provides ID) |
+| Data + Stats | Fire in parallel after Config |
+| Dependency mechanism | `enabled: !!configId` |
+| Progressive rendering | Yes — chips and grid render independently |
+| Error isolation | Config failure = full block; Data/Stats failures = partial |
+| Performance impact | Negligible (Stats ≤ Data duration typically) |
+| Caching benefit | Subsequent visits skip Config wait entirely |
 
-**Key Takeaway:** `useQueries` groups queries for convenience, but they remain **independent**. The UI can and should react to each query's state separately for the best user experience.
+**Key Takeaway:** Moving Stats to depend on Config doesn't hurt performance because Stats (aggregation) is almost always faster than Data (paginated rows). The total time is still `Config + Data`. TanStack Query's `enabled` option makes this pattern clean and declarative.
 
 ---
 

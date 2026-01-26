@@ -52,8 +52,6 @@ import type {
   RowSelectionOptions,
   Module,
   GridApi,
-  ColumnApi,
-  IServerSideGetRowsParams,
 } from 'ag-grid-community'
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community'
 import { AllEnterpriseModule } from 'ag-grid-enterprise'

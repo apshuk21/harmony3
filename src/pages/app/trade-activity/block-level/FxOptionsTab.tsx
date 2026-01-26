@@ -6,6 +6,8 @@ import { useMemo, useState } from 'react'
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community'
 import { ServerSideGrid } from '@/components/ui'
 import type { FxOptionTrade } from '@/mocks/data/fx-options'
+import styles from '@/styles/shared.module.css'
+import localStyles from './FxOptionsTab.module.css'
 
 /**
  * Format number as currency with commas
@@ -182,24 +184,26 @@ export function FxOptionsTab() {
 
   return (
     <div className="tab-panel">
-      <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ margin: 0 }}>FX Options Trades</h3>
+      <div className={styles.tabHeader}>
+        <h3 className={styles.tabTitle}>FX Options Trades</h3>
         {selectedRows.length > 0 && (
-          <p style={{ margin: '8px 0 0', color: '#666' }}>
+          <p className={styles.selectedCount}>
             {selectedRows.length} trade{selectedRows.length !== 1 ? 's' : ''} selected
           </p>
         )}
       </div>
 
-      <ServerSideGrid<FxOptionTrade>
-        columnDefs={columnDefs}
-        fetchUrl="/api/fx-options"
-        rowSelectionMode="multiple"
-        onRowSelected={handleRowSelected}
-        height="calc(100vh - 300px)"
-        cacheBlockSize={100}
-        getRowIdFromData={(data) => data.id}
-      />
+      <div className={localStyles.gridContainer}>
+        <ServerSideGrid<FxOptionTrade>
+          columnDefs={columnDefs}
+          fetchUrl="/api/fx-options"
+          rowSelectionMode="multiple"
+          onRowSelected={handleRowSelected}
+          height="calc(100vh - 300px)"
+          cacheBlockSize={100}
+          getRowIdFromData={(data) => data.id}
+        />
+      </div>
     </div>
   )
 }

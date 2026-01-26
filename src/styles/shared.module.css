@@ -1,0 +1,86 @@
+/**
+ * Shared CSS Module
+ * Reusable component styles across the application
+ */
+
+/* Tab Panel Header */
+.tabHeader {
+  margin-bottom: var(--spacing-md);
+}
+
+.tabHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tabTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.selectedCount {
+  margin: var(--spacing-sm) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Filter Controls */
+.filterControls {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.filterLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.filterSelect {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.filterSelect:hover {
+  border-color: var(--color-primary);
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+}
+
+.searchInput {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  width: 150px;
+  transition: border-color var(--transition-fast), width var(--transition-normal);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchInput:hover {
+  border-color: var(--color-primary);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+  width: 200px;
+}

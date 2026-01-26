@@ -1,0 +1,110 @@
+/**
+ * FxOptionsTab Component Styles
+ * Styles specific to the FX Options tab component
+ */
+
+/* Grid container with border */
+.gridContainer {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Option type badge styles */
+.optionTypeBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.optionTypeCall {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+}
+
+.optionTypePut {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+/* Status badge styles */
+.statusBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+}
+
+.statusActive {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+}
+
+.statusExercised {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--color-info);
+}
+
+.statusExpired {
+  background-color: rgba(107, 114, 128, 0.15);
+  color: var(--color-text-muted);
+}
+
+.statusCancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+/* Greeks display */
+.greekValue {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: var(--font-size-sm);
+}
+
+.greekPositive {
+  color: var(--color-success);
+}
+
+.greekNegative {
+  color: var(--color-error);
+}
+
+/* Price columns alignment */
+.priceCell {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  text-align: right;
+}
+
+/* Currency pair highlight */
+.currencyPair {
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.025em;
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.emptyStateText {
+  font-size: var(--font-size-md);
+  margin: 0;
+}

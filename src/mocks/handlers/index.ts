@@ -9,7 +9,7 @@
 export { tradeHandlers } from './trades'
 export { fxCashHandlers } from './fx-cash'
 export { fxOptionsHandlers } from './fx-options'
+export { authHandlers } from './auth'
 
 // Export other handlers as they are created:
 // export { userHandlers } from './users'
-// export { authHandlers } from './auth'

@@ -11,6 +11,8 @@ import type { ColDef, ValueFormatterParams } from 'ag-grid-community'
 import { ServerSideGrid } from '@/components/ui'
 import type { FxCashTrade } from '@/mocks/data/fx-cash'
 import type { FxCashSearchParams } from '@/routes/_authenticated/_app/trade-activity/block-level/fx-cash'
+import styles from '@/styles/shared.module.css'
+import localStyles from './FxCashTab.module.css'
 
 /**
  * Format number as currency with commas
@@ -159,24 +161,20 @@ export function FxCashTab() {
 
   return (
     <div className="tab-panel">
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>FX Cash Trades</h3>
+      <div className={styles.tabHeader}>
+        <div className={styles.tabHeaderRow}>
+          <h3 className={styles.tabTitle}>FX Cash Trades</h3>
 
           {/* Status filter using Zod-validated search params */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <label htmlFor="status-filter" style={{ fontSize: '14px', color: '#666' }}>
+          <div className={styles.filterControls}>
+            <label htmlFor="status-filter" className={styles.filterLabel}>
               Status:
             </label>
             <select
               id="status-filter"
+              className={styles.filterSelect}
               value={searchParams.status}
               onChange={(e) => updateSearch({ status: e.target.value as typeof searchParams.status })}
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-              }}
             >
               <option value="all">All</option>
               <option value="pending">Pending</option>
@@ -187,35 +185,32 @@ export function FxCashTab() {
             {/* Search input */}
             <input
               type="text"
+              className={styles.searchInput}
               placeholder="Search..."
               value={searchParams.search ?? ''}
               onChange={(e) => updateSearch({ search: e.target.value || undefined })}
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-                width: '150px',
-              }}
             />
           </div>
         </div>
 
         {selectedRows.length > 0 && (
-          <p style={{ margin: '8px 0 0', color: '#666' }}>
+          <p className={styles.selectedCount}>
             {selectedRows.length} trade{selectedRows.length !== 1 ? 's' : ''} selected
           </p>
         )}
       </div>
 
-      <ServerSideGrid<FxCashTrade>
-        columnDefs={columnDefs}
-        fetchUrl="/api/fx-cash"
-        rowSelectionMode="multiple"
-        onRowSelected={handleRowSelected}
-        height="calc(100vh - 300px)"
-        cacheBlockSize={100}
-        getRowIdFromData={(data) => data.id}
-      />
+      <div className={localStyles.gridContainer}>
+        <ServerSideGrid<FxCashTrade>
+          columnDefs={columnDefs}
+          fetchUrl="/api/fx-cash"
+          rowSelectionMode="multiple"
+          onRowSelected={handleRowSelected}
+          height="calc(100vh - 300px)"
+          cacheBlockSize={100}
+          getRowIdFromData={(data) => data.id}
+        />
+      </div>
     </div>
   )
 }

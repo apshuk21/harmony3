@@ -1,3 +1,6 @@
+/* Import design tokens */
+@import './styles/variables.css';
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -143,11 +146,47 @@ a:hover {
   padding: 1rem 2rem;
   border-bottom: 1px solid #333;
   background-color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-greeting {
+  color: #888;
+  font-size: 0.875rem;
+}
+
+.logout-button {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.logout-button:hover:not(:disabled) {
+  background-color: #333;
+  border-color: #666;
+  color: #fff;
+}
+
+.logout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .app-content {
@@ -281,6 +320,21 @@ a:hover {
   .app-header {
     background-color: #f5f5f5;
     border-bottom-color: #ddd;
+  }
+
+  .user-greeting {
+    color: #666;
+  }
+
+  .logout-button {
+    border-color: #ccc;
+    color: #555;
+  }
+
+  .logout-button:hover:not(:disabled) {
+    background-color: #e5e5e5;
+    border-color: #999;
+    color: #213547;
   }
 
   .tab-nav {

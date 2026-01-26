@@ -9,15 +9,15 @@
 import { tradeHandlers } from './handlers/trades'
 import { fxCashHandlers } from './handlers/fx-cash'
 import { fxOptionsHandlers } from './handlers/fx-options'
+import { authHandlers } from './handlers/auth'
 
 // Import other handlers as they are created:
 // import { userHandlers } from './handlers/users'
-// import { authHandlers } from './handlers/auth'
 
 export const handlers = [
   ...tradeHandlers,
   ...fxCashHandlers,
   ...fxOptionsHandlers,
+  ...authHandlers,
   // ...userHandlers,
-  // ...authHandlers,
 ]

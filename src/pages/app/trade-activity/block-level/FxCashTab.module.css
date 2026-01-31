@@ -3,11 +3,15 @@
  * Styles specific to the FX Cash tab component
  */
 
-/* Grid container with border */
+/* Grid container - fills remaining space */
 .gridContainer {
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Status badge styles for inline status display */

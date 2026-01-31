@@ -1,0 +1,59 @@
+/* ===========================================
+   Tab Navigation (Pill Style)
+   Horizontal tab navigation component
+   =========================================== */
+
+.tab-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.tab-link {
+  padding: 0.5rem 1.25rem;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 2px solid transparent;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  /* Inactive state: gray background */
+  background-color: #e5e5e5;
+  color: #555;
+}
+
+.tab-link:hover {
+  background-color: #d5d5d5;
+  color: #333;
+}
+
+.tab-link.active {
+  /* Active state: white/transparent background with green border */
+  background-color: #fff;
+  color: #333;
+  border-color: #10b981;
+}
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tab-panel h3 {
+  margin: 0 0 1rem 0;
+  color: #213547;
+}

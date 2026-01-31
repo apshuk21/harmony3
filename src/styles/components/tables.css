@@ -1,0 +1,48 @@
+/* ===========================================
+   Tables
+   Report and data table styles
+   =========================================== */
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.report-table th,
+.report-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.report-table th {
+  background-color: #1a1a1a;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #888;
+}
+
+.report-table tbody tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* ===========================================
+   Light Mode
+   =========================================== */
+@media (prefers-color-scheme: light) {
+  .report-table th,
+  .report-table td {
+    border-bottom-color: #ddd;
+  }
+
+  .report-table th {
+    background-color: #f5f5f5;
+  }
+
+  .report-table tbody tr:hover {
+    background-color: #f0f0f0;
+  }
+}

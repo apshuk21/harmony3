@@ -1,0 +1,63 @@
+/* ===========================================
+   Navigation Components
+   Sidebar navigation groups and links
+   =========================================== */
+
+/* -------------------------------------------
+   Navigation Group
+   ------------------------------------------- */
+.nav-group {
+  margin-bottom: 1.5rem;
+}
+
+.nav-group-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  padding: 0 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.nav-group-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* -------------------------------------------
+   Navigation Links
+   ------------------------------------------- */
+.nav-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #ccc;
+  text-decoration: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+.nav-link.active {
+  background-color: #646cff;
+  color: #fff;
+}
+
+/* ===========================================
+   Light Mode
+   =========================================== */
+@media (prefers-color-scheme: light) {
+  .nav-link {
+    color: #555;
+  }
+
+  .nav-link:hover {
+    background-color: #e5e5e5;
+    color: #213547;
+  }
+}

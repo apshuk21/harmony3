@@ -160,11 +160,9 @@ export function FxCashTab() {
   }
 
   return (
-    <div className="tab-panel">
+    <div className="tab-panel" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div className={styles.tabHeader}>
         <div className={styles.tabHeaderRow}>
-          <h3 className={styles.tabTitle}>FX Cash Trades</h3>
-
           {/* Status filter using Zod-validated search params */}
           <div className={styles.filterControls}>
             <label htmlFor="status-filter" className={styles.filterLabel}>
@@ -206,7 +204,7 @@ export function FxCashTab() {
           fetchUrl="/api/fx-cash"
           rowSelectionMode="multiple"
           onRowSelected={handleRowSelected}
-          height="calc(100vh - 300px)"
+          height="100%"
           cacheBlockSize={100}
           getRowIdFromData={(data) => data.id}
         />

@@ -12,13 +12,18 @@ const tabs = [
 
 /**
  * Block Level page layout with tabs
- * Uses composition with PageLayout and TabLayout
+ *
+ * Layout structure:
+ * - PageTitle: 78px fixed (breadcrumbs + title)
+ * - TabSection: remaining height
+ *   - TabNav: above white card
+ *   - TabCard: white card with content
  */
 export function BlockLevelPage() {
   return (
     <PageLayout
-      title="Block Level Report"
-      description="View block level trade activity reports"
+      title="Block Level"
+      breadcrumbs={['Overview', 'Trade Activity', 'Block Level']}
     >
       <TabLayout tabs={tabs}>
         <Outlet />

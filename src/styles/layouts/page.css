@@ -1,6 +1,8 @@
 /* ===========================================
    Page Layout
-   Wrapper for individual page content
+   Two-section structure:
+   1. PageTitle: 78px fixed height
+   2. Tab Section: remaining height (flex: 1)
    =========================================== */
 
 .page {
@@ -8,7 +10,20 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: hidden; /* No page-level scroll */
 }
+
+/* Tab section - takes remaining height after title */
+.tab-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Critical for nested flex */
+}
+
+/* ===========================================
+   Legacy styles (kept for backwards compatibility)
+   =========================================== */
 
 .page-header {
   margin-bottom: 1rem;

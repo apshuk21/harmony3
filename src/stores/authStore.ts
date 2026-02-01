@@ -4,6 +4,11 @@
  * Stores authentication state for synchronous access across the app.
  * Works alongside TanStack Query's cache - this is the "client view" of auth state.
  *
+ * Token Storage Strategy:
+ * - Tokens are stored ONLY in localStorage (via auth.ts API layer)
+ * - Zustand stores user data for synchronous access in React components
+ * - This avoids duplicate token storage and keeps a single source of truth
+ *
  * When to use this vs useSession() hook:
  * - useSession(): When you need loading/error states, auto-refetch, cache invalidation
  * - useAuthStore(): When you need synchronous access, outside React, or client-side preferences
@@ -22,17 +27,18 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import type { User } from '@/types/auth'
+import { getAuthToken as getTokenFromStorage } from '@/api/auth'
 
 /**
  * Auth state interface
+ *
+ * Note: Token is NOT stored here - it lives in localStorage only.
+ * Use getAuthToken() from '@/api/auth' or the re-exported version here.
  */
 interface AuthState {
   // User data
   user: User | null
   isAuthenticated: boolean
-
-  // Token (also in localStorage, but having it here allows reactive updates)
-  token: string | null
 
   // Last login timestamp
   lastLoginAt: string | null
@@ -48,8 +54,8 @@ interface AuthState {
  * Auth actions interface
  */
 interface AuthActions {
-  // Set user after successful login
-  setUser: (user: User, token: string) => void
+  // Set user after successful login (token is stored in localStorage by auth.ts)
+  setUser: (user: User) => void
 
   // Clear user on logout
   clearUser: () => void
@@ -72,7 +78,6 @@ type AuthStore = AuthState & AuthActions
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
-  token: null,
   lastLoginAt: null,
   preferences: {
     rememberMe: false,
@@ -89,10 +94,9 @@ export const useAuthStore = create<AuthStore>()(
       (set) => ({
         ...initialState,
 
-        setUser: (user, token) =>
+        setUser: (user) =>
           set({
             user,
-            token,
             isAuthenticated: true,
             lastLoginAt: new Date().toISOString(),
           }),
@@ -100,7 +104,6 @@ export const useAuthStore = create<AuthStore>()(
         clearUser: () =>
           set({
             user: null,
-            token: null,
             isAuthenticated: false,
             lastLoginAt: null,
           }),
@@ -209,7 +212,10 @@ export function isAuthenticated(): boolean {
 
 /**
  * Get auth token synchronously (outside React)
+ *
+ * Note: Token is stored in localStorage, not Zustand.
+ * This is a convenience re-export from the auth API module.
  */
 export function getAuthToken(): string | null {
-  return useAuthStore.getState().token
+  return getTokenFromStorage()
 }

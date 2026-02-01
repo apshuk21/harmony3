@@ -160,7 +160,7 @@ export function FxCashTab() {
   }
 
   return (
-    <div className="tab-panel" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <div className={localStyles.tabPanel}>
       <div className={styles.tabHeader}>
         <div className={styles.tabHeaderRow}>
           {/* Status filter using Zod-validated search params */}

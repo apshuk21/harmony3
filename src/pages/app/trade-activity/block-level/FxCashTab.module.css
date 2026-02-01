@@ -3,6 +3,14 @@
  * Styles specific to the FX Cash tab component
  */
 
+/* Tab panel container - flex layout for content */
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* Grid container - fills remaining space */
 .gridContainer {
   flex: 1;

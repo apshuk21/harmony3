@@ -183,12 +183,9 @@ const tabs = [
 
 export function BlockLevelPage() {
   return (
-    <PageLayout
-      title="Block Level"
-      breadcrumbs={['Overview', 'Trade Activity', 'Block Level']}
-    >
+    <PageLayout title="Block Level" breadcrumbs={['Overview', 'Trade Activity', 'Block Level']}>
       <TabLayout tabs={tabs}>
-        <Outlet />  {/* Renders FxCashTab or FxOptionsTab based on route */}
+        <Outlet /> {/* Renders FxCashTab or FxOptionsTab based on route */}
       </TabLayout>
     </PageLayout>
   )
@@ -219,9 +216,7 @@ export function PageLayout({ title, breadcrumbs, actions, children }: PageLayout
       <PageTitle title={title} breadcrumbs={breadcrumbs} actions={actions} />
 
       {/* Takes remaining height */}
-      <div className="tab-section">
-        {children}
-      </div>
+      <div className="tab-section">{children}</div>
     </div>
   )
 }
@@ -245,15 +240,15 @@ interface PageTitleProps {
 
 export function PageTitle({ breadcrumbs, title, actions }: PageTitleProps) {
   return (
-    <div className={styles.pageTitle}>  {/* height: 78px, flex-shrink: 0 */}
+    <div className={styles.pageTitle}>
+      {' '}
+      {/* height: 78px, flex-shrink: 0 */}
       {breadcrumbs && (
         <nav className={styles.breadcrumbs}>
           {breadcrumbs.map((crumb, i) => (
             <span key={i}>
               {i > 0 && <span className={styles.separator}>/</span>}
-              <span className={i === breadcrumbs.length - 1 ? styles.current : ''}>
-                {crumb}
-              </span>
+              <span className={i === breadcrumbs.length - 1 ? styles.current : ''}>{crumb}</span>
             </span>
           ))}
         </nav>
@@ -291,8 +286,9 @@ interface TabLayoutProps {
 
 export function TabLayout({ tabs, children }: TabLayoutProps) {
   return (
-    <div className={styles.tabLayoutWrapper}>  {/* flex: 1, min-height: 0 */}
-
+    <div className={styles.tabLayoutWrapper}>
+      {' '}
+      {/* flex: 1, min-height: 0 */}
       {/* Tab buttons - sits above the white card */}
       <nav className={styles.tabNav}>
         {tabs.map((tab) => (
@@ -303,16 +299,17 @@ export function TabLayout({ tabs, children }: TabLayoutProps) {
             activeProps={{ className: `${styles.tabLink} ${styles.tabLinkActive}` }}
           >
             {tab.label}
-            {tab.count !== undefined && (
-              <span className={styles.tabCount}>{tab.count}</span>
-            )}
+            {tab.count !== undefined && <span className={styles.tabCount}>{tab.count}</span>}
           </Link>
         ))}
       </nav>
-
       {/* White card containing tab content */}
-      <div className={styles.tabCard}>  {/* flex: 1, white background */}
-        <div className="tab-content">   {/* flex: 1, min-height: 0 */}
+      <div className={styles.tabCard}>
+        {' '}
+        {/* flex: 1, white background */}
+        <div className="tab-content">
+          {' '}
+          {/* flex: 1, min-height: 0 */}
           {children}
         </div>
       </div>
@@ -330,8 +327,10 @@ The actual tab content. Currently has inline filter controls and grid.
 
 export function FxCashTab() {
   return (
-    <div className="tab-panel" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-
+    <div
+      className="tab-panel"
+      style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+    >
       {/* Filter controls - currently inline */}
       <div className={styles.tabHeader}>
         <select>...</select>
@@ -339,12 +338,10 @@ export function FxCashTab() {
       </div>
 
       {/* Grid container - takes remaining space */}
-      <div className={localStyles.gridContainer}>  {/* flex: 1, min-height: 0 */}
-        <ServerSideGrid
-          columnDefs={columnDefs}
-          fetchUrl="/api/fx-cash"
-          height="100%"
-        />
+      <div className={localStyles.gridContainer}>
+        {' '}
+        {/* flex: 1, min-height: 0 */}
+        <ServerSideGrid columnDefs={columnDefs} fetchUrl="/api/fx-cash" height="100%" />
       </div>
     </div>
   )
@@ -389,13 +386,13 @@ For the grid to fill available space without page scroll, every container in the
 
 ### Key CSS Properties
 
-| Property | Purpose |
-|----------|---------|
-| `display: flex; flex-direction: column` | Enables vertical flex layout |
-| `flex: 1` | Grow to fill available space |
-| `min-height: 0` | Allow shrinking below content size (critical!) |
-| `flex-shrink: 0` | Prevent shrinking (for fixed-height elements) |
-| `overflow: hidden` | Prevent scroll at this level |
+| Property                                | Purpose                                        |
+| --------------------------------------- | ---------------------------------------------- |
+| `display: flex; flex-direction: column` | Enables vertical flex layout                   |
+| `flex: 1`                               | Grow to fill available space                   |
+| `min-height: 0`                         | Allow shrinking below content size (critical!) |
+| `flex-shrink: 0`                        | Prevent shrinking (for fixed-height elements)  |
+| `overflow: hidden`                      | Prevent scroll at this level                   |
 
 ### Why `min-height: 0` Matters
 
@@ -417,7 +414,7 @@ By default, flex items have `min-height: auto`, which prevents them from shrinki
 /* With min-height: 0 */
 .child {
   flex: 1;
-  min-height: 0;  /* Now child can shrink, content scrolls inside */
+  min-height: 0; /* Now child can shrink, content scrolls inside */
 }
 ```
 
@@ -509,6 +506,7 @@ Route matching:
 ## Future: TabPanel Architecture
 
 When implemented, `TabPanel`, `TabFilterSection`, and `TabGridSection` will provide:
+
 1. **Structure** - Consistent layout for all tabs
 2. **State Management** - Zustand store for grid API and filters
 3. **Communication** - Filters can control the grid
@@ -545,7 +543,9 @@ function TabPanel({ children }) {
   // Provide store via context so children can access it
   return (
     <TabPanelContext.Provider value={storeRef.current}>
-      <div className={styles.tabPanel}>  {/* flex: 1, min-height: 0, gap: 1rem */}
+      <div className={styles.tabPanel}>
+        {' '}
+        {/* flex: 1, min-height: 0, gap: 1rem */}
         {children}
       </div>
     </TabPanelContext.Provider>
@@ -560,7 +560,9 @@ function TabPanel({ children }) {
 
 function TabFilterSection({ children }) {
   return (
-    <div className={styles.filterSection}>  {/* flex-shrink: 0, content-based */}
+    <div className={styles.filterSection}>
+      {' '}
+      {/* flex-shrink: 0, content-based */}
       {children}
     </div>
   )
@@ -574,7 +576,9 @@ function TabFilterSection({ children }) {
 
 function TabGridSection({ children }) {
   return (
-    <div className={styles.gridSection}>  {/* flex: 1, min-height: 0 */}
+    <div className={styles.gridSection}>
+      {' '}
+      {/* flex: 1, min-height: 0 */}
       {children}
     </div>
   )
@@ -586,32 +590,33 @@ function TabGridSection({ children }) {
 ```tsx
 // src/components/layout/TabPanel/TabPanelStore.ts (FUTURE)
 
-const createTabPanelStore = () => createStore((set, get) => ({
-  // Grid API reference - set when grid mounts
-  gridApi: null,
-  registerGridApi: (api) => set({ gridApi: api }),
+const createTabPanelStore = () =>
+  createStore((set, get) => ({
+    // Grid API reference - set when grid mounts
+    gridApi: null,
+    registerGridApi: (api) => set({ gridApi: api }),
 
-  // Filter state
-  filters: {
-    preset: null,
-    lifecycleStatus: [],
-    dateRange: { start: null, end: null },
-  },
-  setFilters: (filters) => {
-    set({ filters })
-    get().refreshGrid()
-  },
+    // Filter state
+    filters: {
+      preset: null,
+      lifecycleStatus: [],
+      dateRange: { start: null, end: null },
+    },
+    setFilters: (filters) => {
+      set({ filters })
+      get().refreshGrid()
+    },
 
-  // Grid operations
-  refreshGrid: () => {
-    const { gridApi } = get()
-    gridApi?.refreshServerSide({ purge: true })
-  },
+    // Grid operations
+    refreshGrid: () => {
+      const { gridApi } = get()
+      gridApi?.refreshServerSide({ purge: true })
+    },
 
-  // Selected rows (for sidepanels)
-  selectedRows: [],
-  setSelectedRows: (rows) => set({ selectedRows: rows }),
-}))
+    // Selected rows (for sidepanels)
+    selectedRows: [],
+    setSelectedRows: (rows) => set({ selectedRows: rows }),
+  }))
 ```
 
 ### Pseudocode: useTabPanelStore Hook
@@ -630,8 +635,8 @@ function useTabPanelStore(selector) {
 
 // Example usage in a filter component:
 function LifecycleChips() {
-  const status = useTabPanelStore(s => s.filters.lifecycleStatus)
-  const setFilters = useTabPanelStore(s => s.setFilters)
+  const status = useTabPanelStore((s) => s.filters.lifecycleStatus)
+  const setFilters = useTabPanelStore((s) => s.setFilters)
   // ...
 }
 ```
@@ -680,14 +685,14 @@ BlockLevelPage
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  flex-shrink: 0;     /* Don't shrink - height based on content */
+  flex-shrink: 0; /* Don't shrink - height based on content */
 }
 
 .gridSection {
   display: flex;
   flex-direction: column;
-  flex: 1;            /* Take remaining space */
-  min-height: 0;      /* Allow AG Grid to scroll internally */
+  flex: 1; /* Take remaining space */
+  min-height: 0; /* Allow AG Grid to scroll internally */
 }
 ```
 
@@ -697,27 +702,27 @@ BlockLevelPage
 
 ### Current Files
 
-| File | Purpose |
-|------|---------|
-| `src/components/layout/PageLayout.tsx` | Page wrapper with PageTitle + tab-section |
-| `src/components/layout/PageTitle.tsx` | 78px fixed header with breadcrumbs |
-| `src/components/layout/PageTitle.module.css` | PageTitle styles |
-| `src/components/layout/TabLayout.tsx` | Tab navigation + white card wrapper |
-| `src/components/layout/TabLayout.module.css` | TabLayout styles |
-| `src/styles/layouts/page.css` | `.page` and `.tab-section` styles |
-| `src/styles/layouts/app.css` | App shell styles (sidebar, header, content) |
+| File                                         | Purpose                                     |
+| -------------------------------------------- | ------------------------------------------- |
+| `src/components/layout/PageLayout.tsx`       | Page wrapper with PageTitle + tab-section   |
+| `src/components/layout/PageTitle.tsx`        | 78px fixed header with breadcrumbs          |
+| `src/components/layout/PageTitle.module.css` | PageTitle styles                            |
+| `src/components/layout/TabLayout.tsx`        | Tab navigation + white card wrapper         |
+| `src/components/layout/TabLayout.module.css` | TabLayout styles                            |
+| `src/styles/layouts/page.css`                | `.page` and `.tab-section` styles           |
+| `src/styles/layouts/app.css`                 | App shell styles (sidebar, header, content) |
 
 ### Future Files (To Be Created)
 
-| File | Purpose |
-|------|---------|
-| `src/components/layout/TabPanel/index.ts` | Public exports |
-| `src/components/layout/TabPanel/TabPanel.tsx` | Store provider wrapper |
-| `src/components/layout/TabPanel/TabPanelStore.ts` | Zustand store factory |
-| `src/components/layout/TabPanel/TabPanelContext.tsx` | Context + hooks |
-| `src/components/layout/TabPanel/TabFilterSection.tsx` | Filter area wrapper |
-| `src/components/layout/TabPanel/TabGridSection.tsx` | Grid area wrapper |
-| `src/components/layout/TabPanel/TabPanel.module.css` | Styles |
+| File                                                  | Purpose                |
+| ----------------------------------------------------- | ---------------------- |
+| `src/components/layout/TabPanel/index.ts`             | Public exports         |
+| `src/components/layout/TabPanel/TabPanel.tsx`         | Store provider wrapper |
+| `src/components/layout/TabPanel/TabPanelStore.ts`     | Zustand store factory  |
+| `src/components/layout/TabPanel/TabPanelContext.tsx`  | Context + hooks        |
+| `src/components/layout/TabPanel/TabFilterSection.tsx` | Filter area wrapper    |
+| `src/components/layout/TabPanel/TabGridSection.tsx`   | Grid area wrapper      |
+| `src/components/layout/TabPanel/TabPanel.module.css`  | Styles                 |
 
 ---
 

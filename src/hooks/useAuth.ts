@@ -144,7 +144,8 @@ export function useLogin(options?: { redirectTo?: string }) {
       queryClient.setQueryData<User>(authKeys.session(), data.user)
 
       // Update Zustand store (for synchronous access & persistence)
-      setUser(data.user, data.token)
+      // Note: Token is already stored in localStorage by authApi.login()
+      setUser(data.user)
 
       // Redirect to app
       navigate({ to: redirectTo })

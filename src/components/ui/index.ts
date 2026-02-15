@@ -9,3 +9,4 @@ export type {
   ServerSideRequest,
   ServerSideResponse,
 } from './ServerSideGrid'
+export { MultiValueFloatingFilter } from './MultiValueFloatingFilter'

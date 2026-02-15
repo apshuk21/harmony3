@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react'
 import { useSearch, useNavigate } from '@tanstack/react-router'
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community'
-import { ServerSideGrid } from '@/components/ui'
+import { ServerSideGrid, MultiValueFloatingFilter } from '@/components/ui'
 import type { FxCashTrade } from '@/mocks/data/fx-cash'
 import type { FxCashSearchParams } from '@/routes/_authenticated/_app/trade-activity/block-level/fx-cash'
 import styles from '@/styles/shared.module.css'
@@ -58,13 +58,22 @@ export function FxCashTab() {
       {
         field: 'tradeId',
         headerName: 'Trade ID',
-        filter: 'agTextColumnFilter',
+        filter: true,
+        filterParams: {
+          values: ['FXC-000001', 'FXC-000010', 'FXC-000011'],
+        },
         minWidth: 130,
       },
       {
         field: 'currencyPair',
         headerName: 'Currency Pair',
         filter: 'agTextColumnFilter',
+        filterParams: {
+          maxNumConditions: 10, // allow up to 10 conditions
+          numAlwaysVisibleConditions: 2, // show 2 input rows by default
+          defaultJoinOperator: 'OR', // default the join to OR
+        },
+        floatingFilterComponent: MultiValueFloatingFilter,
         minWidth: 130,
       },
       {
@@ -106,13 +115,17 @@ export function FxCashTab() {
       {
         field: 'tradeDate',
         headerName: 'Trade Date',
-        filter: 'agTextColumnFilter',
+        cellDataType: 'dateTime',
+        filter: 'agDateColumnFilter',
+        valueFormatter: (params) => params.value.replace(/[TZ]/g, ' ').trim().slice(0, -4),
         minWidth: 120,
       },
       {
         field: 'valueDate',
         headerName: 'Value Date',
-        filter: 'agTextColumnFilter',
+        filter: 'agDateColumnFilter',
+        cellDataType: 'dateTime',
+        valueFormatter: (params) => params.value.replace(/[TZ]/g, ' ').trim().slice(0, -4),
         minWidth: 120,
       },
       {
@@ -172,7 +185,9 @@ export function FxCashTab() {
               id="status-filter"
               className={styles.filterSelect}
               value={searchParams.status}
-              onChange={(e) => updateSearch({ status: e.target.value as typeof searchParams.status })}
+              onChange={(e) =>
+                updateSearch({ status: e.target.value as typeof searchParams.status })
+              }
             >
               <option value="all">All</option>
               <option value="pending">Pending</option>
@@ -201,6 +216,9 @@ export function FxCashTab() {
       <div className={localStyles.gridContainer}>
         <ServerSideGrid<FxCashTrade>
           columnDefs={columnDefs}
+          defaultColDef={{
+            floatingFilter: true,
+          }}
           fetchUrl="/api/fx-cash"
           rowSelectionMode="multiple"
           onRowSelected={handleRowSelected}

@@ -74,6 +74,7 @@ export function FxCashTab() {
           defaultJoinOperator: 'OR', // default the join to OR
         },
         floatingFilterComponent: MultiValueFloatingFilter,
+        suppressFloatingFilterButton: false,
         minWidth: 130,
       },
       {
@@ -92,6 +93,14 @@ export function FxCashTab() {
         field: 'buyAmount',
         headerName: 'Buy Amount',
         filter: 'agNumberColumnFilter',
+        filterParams: {
+          maxNumConditions: 10,
+          numAlwaysVisibleConditions: 2,
+          defaultJoinOperator: 'OR',
+        },
+        floatingFilterComponent: MultiValueFloatingFilter,
+        floatingFilterComponentParams: { defaultOperator: 'OR', debounceMs: 300 },
+        suppressFloatingFilterButton: false,
         minWidth: 140,
         valueFormatter: (params: ValueFormatterParams<FxCashTrade, number>) =>
           params.value != null ? formatCurrency(params.value) : '',
@@ -216,9 +225,6 @@ export function FxCashTab() {
       <div className={localStyles.gridContainer}>
         <ServerSideGrid<FxCashTrade>
           columnDefs={columnDefs}
-          defaultColDef={{
-            floatingFilter: true,
-          }}
           fetchUrl="/api/fx-cash"
           rowSelectionMode="multiple"
           onRowSelected={handleRowSelected}

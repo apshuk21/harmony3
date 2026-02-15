@@ -4,7 +4,7 @@
  */
 import { useMemo, useState } from 'react'
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community'
-import { ServerSideGrid } from '@/components/ui'
+import { ServerSideGrid, MultiValueFloatingFilter } from '@/components/ui'
 import type { FxOptionTrade } from '@/mocks/data/fx-options'
 import styles from '@/styles/shared.module.css'
 import localStyles from './FxOptionsTab.module.css'
@@ -50,6 +50,13 @@ export function FxOptionsTab() {
         field: 'currencyPair',
         headerName: 'Currency Pair',
         filter: 'agTextColumnFilter',
+        filterParams: {
+          maxNumConditions: 10,
+          numAlwaysVisibleConditions: 2,
+          defaultJoinOperator: 'OR',
+        },
+        floatingFilterComponent: MultiValueFloatingFilter,
+        suppressFloatingFilterButton: false,
         minWidth: 130,
       },
       {
@@ -82,6 +89,14 @@ export function FxOptionsTab() {
         field: 'notionalAmount',
         headerName: 'Notional',
         filter: 'agNumberColumnFilter',
+        filterParams: {
+          maxNumConditions: 10,
+          numAlwaysVisibleConditions: 2,
+          defaultJoinOperator: 'OR',
+        },
+        floatingFilterComponent: MultiValueFloatingFilter,
+        floatingFilterComponentParams: { defaultOperator: 'OR' },
+        suppressFloatingFilterButton: false,
         minWidth: 140,
         valueFormatter: (params: ValueFormatterParams<FxOptionTrade, number>) =>
           params.value != null ? formatCurrency(params.value) : '',

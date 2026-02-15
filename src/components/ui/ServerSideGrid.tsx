@@ -263,6 +263,12 @@ function ServerSideGridInner<T extends object>(
       resizable: true,
       minWidth: 100,
       flex: 1,
+      floatingFilter: true,
+      filterParams: {
+        maxNumConditions: 10,
+        numAlwaysVisibleConditions: 2,
+        defaultJoinOperator: 'OR',
+      },
       ...customDefaultColDef,
     }),
     [customDefaultColDef]

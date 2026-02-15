@@ -9,6 +9,8 @@
 import { http, HttpResponse, delay } from 'msw'
 import { mockFxCashTrades } from '../data/fx-cash'
 import type { FxCashTrade } from '../data/fx-cash'
+import { evaluateColumnFilter } from './filter-utils'
+import type { ColumnFilterModel } from './filter-utils'
 
 /**
  * AG Grid Server-Side Row Model request structure
@@ -20,16 +22,7 @@ interface ServerSideRequest {
     colId: string
     sort: 'asc' | 'desc'
   }>
-  filterModel: Record<
-    string,
-    {
-      filterType: string
-      type?: string
-      filter?: string | number
-      filterTo?: string | number
-      values?: string[]
-    }
-  >
+  filterModel: Record<string, ColumnFilterModel>
 }
 
 /**
@@ -78,71 +71,7 @@ function applyFiltering(
 
   return data.filter((row) => {
     for (const [colId, filter] of Object.entries(filterModel)) {
-      const value = row[colId as keyof FxCashTrade]
-
-      if (filter.filterType === 'text' && filter.filter) {
-        const filterValue = String(filter.filter).toLowerCase()
-        const cellValue = String(value).toLowerCase()
-
-        switch (filter.type) {
-          case 'contains':
-            if (!cellValue.includes(filterValue)) return false
-            break
-          case 'notContains':
-            if (cellValue.includes(filterValue)) return false
-            break
-          case 'equals':
-            if (cellValue !== filterValue) return false
-            break
-          case 'notEqual':
-            if (cellValue === filterValue) return false
-            break
-          case 'startsWith':
-            if (!cellValue.startsWith(filterValue)) return false
-            break
-          case 'endsWith':
-            if (!cellValue.endsWith(filterValue)) return false
-            break
-          default:
-            if (!cellValue.includes(filterValue)) return false
-        }
-      }
-
-      if (filter.filterType === 'number' && filter.filter !== undefined) {
-        const filterValue = Number(filter.filter)
-        const cellValue = Number(value)
-
-        switch (filter.type) {
-          case 'equals':
-            if (cellValue !== filterValue) return false
-            break
-          case 'notEqual':
-            if (cellValue === filterValue) return false
-            break
-          case 'greaterThan':
-            if (cellValue <= filterValue) return false
-            break
-          case 'greaterThanOrEqual':
-            if (cellValue < filterValue) return false
-            break
-          case 'lessThan':
-            if (cellValue >= filterValue) return false
-            break
-          case 'lessThanOrEqual':
-            if (cellValue > filterValue) return false
-            break
-          case 'inRange':
-            if (filter.filterTo !== undefined) {
-              if (cellValue < filterValue || cellValue > Number(filter.filterTo))
-                return false
-            }
-            break
-        }
-      }
-
-      if (filter.filterType === 'set' && filter.values) {
-        if (!filter.values.includes(String(value))) return false
-      }
+      if (!evaluateColumnFilter(row[colId as keyof FxCashTrade], filter)) return false
     }
     return true
   })
